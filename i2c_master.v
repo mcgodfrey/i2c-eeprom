@@ -27,6 +27,7 @@ module i2c_master(
 		output wire busy
 	);
 	
+	//state parameters
 	localparam STATE_IDLE = 0;
 	localparam STATE_START = 1;
 	localparam STATE_ADDR = 2;
@@ -41,7 +42,7 @@ module i2c_master(
 	localparam WRITE = 0;
 	localparam ACK = 0;
 	
-	reg [7:0] state;
+	reg [5:0] state;
 	reg [7:0] bit_count;	//bit counter
 	//local buffers
 	reg [6:0] addr;
@@ -51,6 +52,9 @@ module i2c_master(
 	reg scl_en = 0;
 	reg sda;
 	
+	//i2c needs to float the sda line when it is high.
+	//so here I define sda_w which is the wire actually connected to the
+	// line to be z when sda (logical signal) is 1
 	assign sda_w = ((sda)==0) ? 0 : 1'bz;
 	
 	assign ready = ((reset == 0) && (state == STATE_IDLE)) ? 1 : 0;
@@ -59,7 +63,9 @@ module i2c_master(
 
 	//clock
 	//scl is enabled whenever we are sending or receiving data.
-	//otherwise it is held at 1
+	//  otherwise it is held at 1
+	//Note that I also ned to do an ACK check here on the negedge so that I am 
+	//  ready to respond on the next posedge below
 	assign scl = (scl_en == 0) ? 1 : ~clk;
 	
 	always @(negedge clk) begin
@@ -107,8 +113,6 @@ module i2c_master(
 					sda <= 1;
 					if (start) begin
 						state <= STATE_START;
-					end else begin
-						state <= STATE_IDLE;
 					end //if start
 				end
 				
@@ -127,7 +131,7 @@ module i2c_master(
 				end	//state_start
 				
 				
-				STATE_ADDR: begin //address
+				STATE_ADDR: begin //send slave address
 					sda <= addr[bit_count];
 					if (bit_count == 0) begin
 						state <= STATE_RW;
@@ -138,7 +142,7 @@ module i2c_master(
 				end	//state_addr
 				
 				
-				STATE_RW: begin
+				STATE_RW: begin //send R/W bit
 					sda <= rw;
 					state <= STATE_ACK;
 				end	//state_rw
@@ -147,11 +151,12 @@ module i2c_master(
 				STATE_ACK: begin
 					//release the sda line and await ack
 					sda <= 1;
-					//Ack is checked on the rising edge of scl (neg edge of clk)
+					//Ack is checked on the next rising edge of scl (neg edge of clk)
 					//So I just assume that it is all ok and set the next state here
-					//if there is no ack then the state will be overwritten
+					//if there is no ack then the state will be overwritten when it is checked
 					
-					tx_data_req <= 0; 
+					tx_data_req <= 0; //time is up. if the data isn't in tx by now it is too late!
+					
 					//now we have to decide what to do next.
 					if (nbytes == 0) begin
 						//there is no data left to read/write
@@ -161,7 +166,7 @@ module i2c_master(
 							state <= STATE_START;
 						end else begin
 							//we are done
-							sda <= 0;
+							sda <= 1; //idle state is high
 							state <= STATE_STOP;
 						end	//if start == 1
 						
@@ -181,46 +186,8 @@ module i2c_master(
 
 				end //state_ack
 				
-				
-				STATE_READ_ACK: begin
-					//check that i receive ack
-					//if (sda_w == ACK) begin
-					if (1) begin
-					
-						//now we have to decide what to do next.
-						if (nbytes == 0) begin
-							//there is no data left to read/write
-							if (start == 1) begin
-								//repeat start condition
-								sda <= 1;
-								state <= STATE_START;
-							end else begin
-								//we are done
-								sda <= 0;
-								state <= STATE_STOP;
-							end	//if start == 1
-							
-						end else begin
-							//we have more data to read/write
-							if (rw == WRITE) begin
-								data <= write_data;	//latch in the new data byte
-								tx_data_req <= 1;
-								bit_count <= 7;	//8 data bits
-								state <= STATE_TX_DATA;
-							end else begin
-								// Read data
-								bit_count <= 7;	//8 data bits
-								state <= STATE_RX_DATA;
-							end //if rw_buf == WRITE
-						end //if nbytes_buf == 0
-						
-					end else begin
-						//ERROR - no ack received. return to idle
-						state <= STATE_IDLE;
-					end //if sda == ACK
-					
-				end //state_read_ack
-				
+		
+
 				STATE_TX_DATA: begin
 					sda <= data[bit_count];
 					if (nbytes > 0) begin
@@ -236,6 +203,8 @@ module i2c_master(
 					end
 				end	//state_tx_data
 				
+				
+				
 				STATE_RX_DATA: begin
 					data[bit_count] <= sda_w;
 					if (bit_count == 0) begin
@@ -248,8 +217,11 @@ module i2c_master(
 					end
 					else begin
 						bit_count <= bit_count - 1;
+						rx_data_ready <= 0;
 					end
 				end	//state_rx_data
+				
+				
 				
 				STATE_STOP: begin
 					sda <= 1;

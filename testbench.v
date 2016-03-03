@@ -22,7 +22,7 @@
 // 
 ////////////////////////////////////////////////////////////////////////////////
 
-module test_i2c_master_v4;
+module testbench;
 
 	// Inputs
 	reg clk;
@@ -136,6 +136,9 @@ module test_i2c_master_v4;
 		//set the start bit
 		start = 1;
 		
+		
+		#10000
+		start = 0;
 		#100000;
 		
 		
