@@ -38,8 +38,6 @@ module testbench;
 
 	// Outputs
 	wire scl;
-	wire ready;
-	wire busy;
 	wire [7:0] data_out;
 
 
@@ -62,7 +60,7 @@ module testbench;
 
 
 	// Instantiate the Unit Under Test (UUT)
-	i2c_master i2c (
+	i2c_master uut2 (
 		.clk(i2c_clk), 
 		.reset(i2c_reset), 
 		.start(i2c_start), 
@@ -74,9 +72,7 @@ module testbench;
 		.tx_data_req(i2c_tx_data_req), 
 		.rx_data_ready(i2c_rx_data_ready), 
 		.sda_w(sda_w), 
-		.scl(scl), 
-		.ready(ready), 
-		.busy(busy)
+		.scl(scl)
 	);
 
 

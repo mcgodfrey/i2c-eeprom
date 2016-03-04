@@ -72,7 +72,8 @@ module read_eeprom(
 	input wire [7:0] i2c_read_data,
 	input wire i2c_tx_data_req,
 	input wire i2c_rx_data_ready,
-	output reg i2c_start
+	output reg i2c_start,
+	output reg busy
 	);
 
 
@@ -116,6 +117,8 @@ module read_eeprom(
 			byte_count <= 0;
 			waiting_for_tx <= 0;
 			
+			busy <= 0;
+			
 			state <= STATE_IDLE;
 			
 		end else begin
@@ -123,6 +126,9 @@ module read_eeprom(
 			case(state)
 			
 				STATE_IDLE: begin	//idle
+				
+					busy <= 0;	
+					
 					if (start) begin
 						state <= STATE_START;
 						
@@ -145,6 +151,7 @@ module read_eeprom(
 					waiting_for_tx <= 0;
 
 					i2c_start <= 1;
+					busy <= 1;
 				end //state_start
 				
 				
@@ -157,12 +164,12 @@ module read_eeprom(
 							case (byte_count)
 								2: begin
 									i2c_write_data <= mem_addr[15:8];
-									byte_count <= byte_count - 1;
+									byte_count <= byte_count - 1'b1;
 								end //case 2
 								
 								1: begin
 									i2c_write_data <= mem_addr[7:0];
-									byte_count <= byte_count - 1;
+									byte_count <= byte_count - 1'b1;
 									state <= STATE_REP_START;
 								end //case 1
 							endcase
@@ -197,7 +204,7 @@ module read_eeprom(
 							data_out <= i2c_read_data;
 							byte_ready <= 1;
 							if (byte_count < (read_nbytes-1)) begin
-								byte_count <= byte_count +1;
+								byte_count <= byte_count + 1'b1;
 								read_prev_data <= 1;
 							end else begin
 								//we are done

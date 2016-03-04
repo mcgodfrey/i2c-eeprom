@@ -21,10 +21,7 @@ module i2c_master(
 		output reg rx_data_ready, 
 		
 		inout wire sda_w,
-		output wire scl,
-		
-		output wire ready,
-		output wire busy
+		output wire scl
 	);
 	
 	//state parameters
@@ -55,10 +52,7 @@ module i2c_master(
 	//i2c needs to float the sda line when it is high.
 	//so here I define sda_w which is the wire actually connected to the
 	// line to be z when sda (logical signal) is 1
-	assign sda_w = ((sda)==0) ? 0 : 1'bz;
-	
-	assign ready = ((reset == 0) && (state == STATE_IDLE)) ? 1 : 0;
-	assign busy = ~ready;
+	assign sda_w = ((sda)==0) ? 1'b0 : 1'bz;
 	
 
 	//clock
@@ -66,7 +60,7 @@ module i2c_master(
 	//  otherwise it is held at 1
 	//Note that I also ned to do an ACK check here on the negedge so that I am 
 	//  ready to respond on the next posedge below
-	assign scl = (scl_en == 0) ? 1 : ~clk;
+	assign scl = (scl_en == 0) ? 1'b1 : ~clk;
 	
 	always @(negedge clk) begin
 		if (reset == 1) begin
@@ -137,7 +131,7 @@ module i2c_master(
 						state <= STATE_RW;
 					end
 					else begin
-						bit_count <= bit_count - 1;
+						bit_count <= bit_count - 1'b1;
 					end
 				end	//state_addr
 				
@@ -196,10 +190,10 @@ module i2c_master(
 					if (bit_count == 0) begin
 						//byte transfer complete
 						state <= STATE_ACK;
-						nbytes <= nbytes-1;
+						nbytes <= nbytes - 1'b1;
 					end
 					else begin
-						bit_count <= bit_count -1;
+						bit_count <= bit_count - 1'b1;
 					end
 				end	//state_tx_data
 				
@@ -213,10 +207,10 @@ module i2c_master(
 						read_data[7:1] <= data[7:1];
 						read_data[0] <= sda_w;
 						rx_data_ready <= 1;
-						nbytes <= nbytes-1;
+						nbytes <= nbytes - 1'b1;
 					end
 					else begin
-						bit_count <= bit_count - 1;
+						bit_count <= bit_count - 1'b1;
 						rx_data_ready <= 0;
 					end
 				end	//state_rx_data
