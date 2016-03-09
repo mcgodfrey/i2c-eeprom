@@ -32,3 +32,5 @@ NET "avr_rx_busy" LOC = P39 | IOSTANDARD = LVTTL;
 
 NET "i2c_sda" LOC = P57 | IOSTANDARD = LVTTL;
 NET "i2c_scl" LOC = P66 | IOSTANDARD = LVTTL;
+NET "i2c_clk_in" LOC = P74 | IOSTANDARD = LVTTL;
+

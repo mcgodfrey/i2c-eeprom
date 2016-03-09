@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <report-views version="2.0" >
  <header>
-  <DateModified>2016-03-05T01:00:20</DateModified>
+  <DateModified>2016-03-09T21:00:40</DateModified>
   <ModuleName>mojo_top</ModuleName>
-  <SummaryTimeStamp>2016-03-05T00:05:36</SummaryTimeStamp>
+  <SummaryTimeStamp>2016-03-09T20:48:44</SummaryTimeStamp>
   <SavedFilePath>C:/Users/matt/Documents/projects/mojo/i2c-eeprom/iseconfig/mojo_top.xreport</SavedFilePath>
   <ImplementationReportsDirectory>C:/Users/matt/Documents/projects/mojo/i2c-eeprom/syn\</ImplementationReportsDirectory>
   <DateInitialized>2016-03-05T00:05:56</DateInitialized>

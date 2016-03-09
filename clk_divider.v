@@ -10,7 +10,8 @@ module clk_divider(
 	
 	parameter DIVIDER = 500;
 	
-	reg [9:0] count = 0;
+	reg [15:0] count = 0;
+	
 	
 	always @(posedge clk_in) begin
 	
@@ -20,13 +21,13 @@ module clk_divider(
 		end	//if reset
 		else begin
 			if (count == ((DIVIDER/2)-1)) begin
+			//if (count >= 244) begin
 				clk_out = ~clk_out;
 				count = 0;
-			end
-			else begin
-				count = count + 1;
-			end
-		end	// if reset (else)
-	end	//always
+			end else begin
+				count = count + 1'b1;
+			end //if count >= 244
+		end  // if reset (else)
+	end  //always
 	
 endmodule

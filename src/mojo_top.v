@@ -20,8 +20,9 @@ module mojo_top(
     input wire avr_rx_busy, // AVR Rx buffer full
 	 
 	 output wire i2c_scl,
-	 inout wire i2c_sda
+	 inout wire i2c_sda,
 	 
+	 output wire i2c_clk_in
     );
 
 wire reset = ~rst_n; // make reset active high
@@ -38,25 +39,22 @@ assign led[6] = i2c_clk_in;
 wire tick_1s;
 
 //Generate a 1s timer
-timer #(.CTR_LEN(26)) second_timer (
-//timer second_timer (
+//timer #(.CTR_LEN(26)) second_timer (
+timer #(.CTR_LEN(16)) second_timer (
     .clk(clk), 
     .reset(reset), 
     .tick(tick_1s)
     );
 
 
-wire i2c_clk_in;
-
-clk_divider i2c_clk_divider (
+clk_divider #(.DIVIDER(500)) i2c_clk_divider (
     .reset(reset), 
     .clk_in(clk), 
     .clk_out(i2c_clk_in)
     );
-
-
+	 
 wire i2c_start;
-wire i2c_reset;
+reg i2c_reset = 1'b1;
 wire [7:0] i2c_nbytes;
 wire [6:0] i2c_slave_addr;
 wire i2c_rw;
@@ -86,7 +84,7 @@ wire [6:0] slave_addr = 7'b1010000;
 reg [15:0] mem_addr;
 wire [7:0] read_n_bytes = 8'd1;
 
-wire [7:0] read_nbytes = 0;
+wire [7:0] read_nbytes = 1;
 reg start = 0;
 wire [7:0] data_out;
 wire byte_ready;
@@ -150,27 +148,18 @@ always @(posedge clk) begin
 end
 
 
-	 
-/*
-
-
-	 
-	 
-/we need to make sure the i2c module is reset *after*
+//we need to make sure the i2c module is reset *after*
 //it's clock has begun
-always @(posedge clk_i2c_in) begin
+always @(negedge i2c_clk_in) begin
 	
 	if (reset == 1) begin
-		
+		i2c_reset <= 1;
 	end else begin
 		i2c_reset <= 0;
 	end
 end //posedge clk_i2c_in
-	
-	
 
-*/
-
+	
 
 
 
